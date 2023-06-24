@@ -59,7 +59,8 @@ func receiveMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", welcomeHandler)
+	http.HandleFunc("/welcome", welcomeHandler)
+
 	http.HandleFunc("/room/1", receiveMessage)
 
 	log.Println("Server started")

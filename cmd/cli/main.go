@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -9,28 +8,8 @@ import (
 	"jacobrlewis/chatroom/pkg/shared"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 )
-
-func get_server_url() string {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Host (localhost): ")
-	host, err := reader.ReadString('\n')
-	if err != nil {
-		log.Fatal("Failed to read input")
-	}
-	host = strings.TrimSpace(host)
-
-	if host == "" {
-		fmt.Println("Defaulting to localhost")
-		host = "localhost"
-	}
-
-	port := "3333"
-	url := "http://" + host + ":" + port
-	return url
-}
 
 func init_connection(url string, username string) int {
 
@@ -59,16 +38,10 @@ func init_connection(url string, username string) int {
 	return serverHello.RoomCount
 }
 
-func read_msg() (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("You: ")
-	return reader.ReadString('\n')
-}
-
 func send_chats(room_url string, username string) {
 
 	for {
-		msg, err := read_msg()
+		msg, err := ReadMsg()
 
 		if err != nil {
 			log.Println("Failed to read message")
@@ -98,17 +71,16 @@ func send_chats(room_url string, username string) {
 }
 
 func main() {
-	url := get_server_url()
+	url := GetServerUrl()
 
-	// TODO prompt for username
-	username := "username"
+	username := GetUsername()
 
-	num_rooms := init_connection(url, username)
+	num_rooms := init_connection(url + "/welcome", username)
 	fmt.Printf("There are %d rooms on this server.\n", num_rooms)
 
-	// TODO: prompt for room_id to connect to
-	room_id := "1"
+	room_id := GetRoomId()
 	room_url := url + "/room/" + room_id
+	fmt.Println(room_url)
 
 	send_chats(room_url, username)
 }
