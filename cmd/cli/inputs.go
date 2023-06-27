@@ -23,8 +23,8 @@ func GetServerUrl() string {
 	}
 
 	port := "3333"
-	url := "http://" + host + ":" + port
-	return url
+	host = "http://" + host + ":" + port
+	return host
 }
 
 func GetUsername() string {
@@ -54,5 +54,11 @@ func GetRoomId() string {
 func ReadMsg() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("You: ")
-	return reader.ReadString('\n')
+	msg, err := reader.ReadString('\n')
+	if err != nil {
+		log.Println("Failed to read message")
+		return msg, err
+	}
+	msg = strings.TrimSpace(msg)
+	return msg, err
 }
