@@ -83,20 +83,28 @@ func (room ServerRoom) startWs(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// receive messages for one websocket connection
 func (room ServerRoom) wsListen(conn *websocket.Conn) {
 	for {
-		_, message, err := conn.ReadMessage()
+		_, msgBytes, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Error reading message from client:", err)
 			break
 		}
 
 		var msg shared.Msg
-		err = json.Unmarshal(message, &msg)
+		err = json.Unmarshal(msgBytes, &msg)
 		if err != nil {
 			log.Println("Failed to unmarshal JSON body", http.StatusBadRequest)
 			return
 		}
 		log.Println(fmt.Sprintf("Room %s received message: %+v", room.Id, msg))
+
+		// send messages to other users
+		for username, out := range room.Conns {
+			if username != msg.Username {
+				out.WriteMessage(websocket.TextMessage, msgBytes)
+			}
+		}
 	}
 }

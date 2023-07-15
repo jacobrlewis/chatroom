@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"jacobrlewis/chatroom/pkg/shared"
 	"log"
 	"net/http"
+	"os"
 )
 
 type Client struct {
@@ -16,6 +18,7 @@ type Client struct {
 	Username string
 	Room     string
 	Conn     *websocket.Conn
+	Reader   *bufio.Reader
 }
 
 // connect to a server for the first time
@@ -93,6 +96,7 @@ func (client Client) joinRoom() {
 	client.chatLoop()
 }
 
+// receive messages from the server
 func (client Client) receiveMessages() {
 	for {
 		_, bytes, err := client.Conn.ReadMessage()
@@ -106,7 +110,19 @@ func (client Client) receiveMessages() {
 			log.Println("Failed to unmarshal JSON body", http.StatusBadRequest)
 			return
 		}
+
+		fmt.Printf("Got message %v", msg)
+
+		// TODO read current input buffer (if user has anything typed not yet sent)
+
+		// clear current line and print new message
+		clearCurrentLine := "\033[2K"
+		fmt.Print(clearCurrentLine + "\r")
 		fmt.Println(msg.Username + ": " + msg.Msg)
+
+		// re-print prompt
+		fmt.Print("You: ")
+		// // TODO print anything user was typing
 	}
 }
 
@@ -130,8 +146,8 @@ func sendChat(conn *websocket.Conn, msgStruct shared.Msg) {
 func (client Client) chatLoop() {
 
 	for {
-		msg, err := ReadMsg()
-		if err != nil {
+		msg, err := ReadMsg(client.Reader)
+		if err != nil || msg == "" {
 			continue
 		}
 		msgStruct := shared.Msg{
@@ -147,7 +163,7 @@ func main() {
 	host := GetServerUrl()
 	username := GetUsername()
 
-	client := Client{Username: username, Host: host, Room: ""}
+	client := Client{Username: username, Host: host, Room: "", Reader: bufio.NewReader(os.Stdin)}
 
 	num_rooms := client.initConnection()
 	fmt.Printf("There are %d rooms on this server.\n", num_rooms)

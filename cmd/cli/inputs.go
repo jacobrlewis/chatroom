@@ -51,8 +51,7 @@ func GetRoomId() string {
 	return id
 }
 
-func ReadMsg() (string, error) {
-	reader := bufio.NewReader(os.Stdin)
+func ReadMsg(reader *bufio.Reader) (string, error) {
 	fmt.Print("You: ")
 	msg, err := reader.ReadString('\n')
 	if err != nil {
