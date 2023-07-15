@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"bufio"
-	"os"
+	"fmt"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -23,7 +23,7 @@ func GetServerUrl() string {
 	}
 
 	port := "3333"
-	host = "http://" + host + ":" + port
+	host = host + ":" + port
 	return host
 }
 

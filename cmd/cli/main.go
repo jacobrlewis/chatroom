@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"io/ioutil"
 	"jacobrlewis/chatroom/pkg/shared"
 	"log"
@@ -11,15 +12,17 @@ import (
 )
 
 type Client struct {
-	Host string
+	Host     string
 	Username string
-	Room string
+	Room     string
+	Conn     *websocket.Conn
 }
 
 // connect to a server for the first time
 func (client Client) initConnection() int {
 
-	url := client.Host + shared.GetInitEndpoint()
+	url := shared.GetInitUrl(client.Host)
+	fmt.Println(url)
 
 	clientHello := shared.ClientHello{
 		Username: client.Username,
@@ -50,7 +53,9 @@ func (client Client) initConnection() int {
 // join a room
 func (client Client) joinRoom() {
 
-	welcome_url := client.Host + shared.GetRoomWelcomeEndpoint(client.Room)
+	// hellos
+	welcome_url := shared.GetRoomWelcomeUrl(client.Host, client.Room)
+	fmt.Println(welcome_url)
 
 	clientHello := shared.ClientHello{
 		Username: client.Username,
@@ -73,33 +78,57 @@ func (client Client) joinRoom() {
 	if err != nil {
 		log.Fatal("Failed to unmarshall server welcome")
 	}
-
 	fmt.Println(serverHello.WelcomeMsg)
+
+	// open websocket
+	ws_url := shared.GetRoomWsUrl(client.Host, client.Room)
+	headers := http.Header{}
+	headers.Set("X-Client-Info", string(helloBytes))
+	conn, _, err := websocket.DefaultDialer.Dial(ws_url.String(), headers)
+	if err != nil {
+		log.Fatal("Failed to connect to WebSocket server: ", err)
+	}
+	client.Conn = conn
+	go client.receiveMessages()
+	client.chatLoop()
+}
+
+func (client Client) receiveMessages() {
+	for {
+		_, bytes, err := client.Conn.ReadMessage()
+		if err != nil {
+			log.Println("Error reading message from server:", err)
+			return
+		}
+		var msg shared.Msg
+		err = json.Unmarshal(bytes, &msg)
+		if err != nil {
+			log.Println("Failed to unmarshal JSON body", http.StatusBadRequest)
+			return
+		}
+		fmt.Println(msg.Username + ": " + msg.Msg)
+	}
 }
 
 // send a chat to a room
-func sendChat(room_url string, msgStruct shared.Msg) {
-	
+func sendChat(conn *websocket.Conn, msgStruct shared.Msg) {
+
 	jsonStr, err := json.Marshal(msgStruct)
 	if err != nil {
 		log.Println("Message failed to encode")
 		return
 	}
 
-	jsonBody := []byte(jsonStr)
-	bodyReader := bytes.NewReader(jsonBody)
-	resp, err := http.Post(room_url, "json", bodyReader)
+	err = conn.WriteMessage(websocket.TextMessage, jsonStr)
 	if err != nil {
-		log.Println("Message failed to send")
+		log.Println("Error sending message to server:", err)
 		return
 	}
-	resp.Body.Close()
 }
 
 // endlessly send messages
 func (client Client) chatLoop() {
-	
-	room_url := client.Host + shared.GetRoomSendChatEndpoint(client.Room)
+
 	for {
 		msg, err := ReadMsg()
 		if err != nil {
@@ -110,7 +139,7 @@ func (client Client) chatLoop() {
 			Msg:      msg,
 		}
 		// send without waiting
-		go sendChat(room_url, msgStruct)
+		go sendChat(client.Conn, msgStruct)
 	}
 }
 
@@ -126,7 +155,4 @@ func main() {
 	client.Room = GetRoomId()
 
 	client.joinRoom()
-
-	
-	client.chatLoop()
 }
