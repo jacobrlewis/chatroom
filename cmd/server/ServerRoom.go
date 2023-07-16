@@ -7,7 +7,6 @@ import (
 	"jacobrlewis/chatroom/pkg/shared"
 	"log"
 	"net/http"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -15,7 +14,6 @@ type ServerRoom struct {
 	Id             string
 	RoomWelcomeMsg string
 	Password       string
-	// connections
 	Conns map[string]*websocket.Conn
 }
 
@@ -85,10 +83,17 @@ func (room ServerRoom) startWs(w http.ResponseWriter, r *http.Request) {
 
 // receive messages for one websocket connection
 func (room ServerRoom) wsListen(conn *websocket.Conn) {
+	defer conn.Close()
 	for {
 		_, msgBytes, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Error reading message from client:", err)
+
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+				log.Println("Client closed unexpectedly.")
+			} else {
+				log.Println("Client closed connection.")
+			}
 			break
 		}
 
@@ -96,7 +101,7 @@ func (room ServerRoom) wsListen(conn *websocket.Conn) {
 		err = json.Unmarshal(msgBytes, &msg)
 		if err != nil {
 			log.Println("Failed to unmarshal JSON body", http.StatusBadRequest)
-			return
+			continue
 		}
 		log.Println(fmt.Sprintf("Room %s received message: %+v", room.Id, msg))
 

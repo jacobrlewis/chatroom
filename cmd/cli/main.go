@@ -25,7 +25,6 @@ type Client struct {
 func (client Client) initConnection() int {
 
 	url := shared.GetInitUrl(client.Host)
-	fmt.Println(url)
 
 	clientHello := shared.ClientHello{
 		Username: client.Username,
@@ -58,7 +57,6 @@ func (client Client) joinRoom() {
 
 	// hellos
 	welcome_url := shared.GetRoomWelcomeUrl(client.Host, client.Room)
-	fmt.Println(welcome_url)
 
 	clientHello := shared.ClientHello{
 		Username: client.Username,
@@ -102,6 +100,13 @@ func (client Client) receiveMessages() {
 		_, bytes, err := client.Conn.ReadMessage()
 		if err != nil {
 			log.Println("Error reading message from server:", err)
+
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+				log.Println("Server closed unexpectedly.")
+			} else {
+				log.Println("Server closed connection.")
+			}
+			// TODO close entire client
 			return
 		}
 		var msg shared.Msg
