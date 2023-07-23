@@ -86,8 +86,13 @@ func (client Client) joinRoom() {
 	wsUrl := shared.GetRoomWsUrl(client.Host, client.Room)
 	headers := http.Header{}
 	headers.Set("X-Client-Info", string(helloBytes))
-	conn, _, err := websocket.DefaultDialer.Dial(wsUrl.String(), headers)
+	conn, resp, err := websocket.DefaultDialer.Dial(wsUrl.String(), headers)
 	if err != nil {
+		if resp.StatusCode == http.StatusConflict {
+			fmt.Println("Your username is already taken in this room, try a new one.")
+			client.Username = GetUsername()
+			client.joinRoom()
+		}
 		log.Fatal("Failed to connect to WebSocket server: ", err)
 	}
 	client.Conn = conn

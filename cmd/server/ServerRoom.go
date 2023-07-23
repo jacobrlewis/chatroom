@@ -58,28 +58,30 @@ func (room ServerRoom) roomWelcomehandler(w http.ResponseWriter, r *http.Request
 // start websocket connection with a client
 func (room ServerRoom) startWs(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Room %s starting web socket connection", room.Id)
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println("Failed to upgrade to ws. ", err)
-		return
-	}
-
+	
 	helloBytes := r.Header.Get("X-Client-Info")
-
 	var hello shared.ClientHello
-	err = json.Unmarshal([]byte(helloBytes), &hello)
+	err := json.Unmarshal([]byte(helloBytes), &hello)
 	if err != nil {
 		log.Println("Could not unmarshall ClientHello. ", err)
 		http.Error(w, "Invalid ClientHello", http.StatusBadRequest)
 		return
 	}
 
+	if room.Conns[hello.Username] != nil {
+		http.Error(w, "Duplicate username", http.StatusConflict)
+		return
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Failed to upgrade to ws. ", err)
+		return
+	}
 	log.Printf("Room %s started web socket connection with %s", room.Id, hello.Username)
 
-	// TODO handle duplicate username
 	room.Conns[hello.Username] = conn
-	go room.wsListen(conn)
-
+	room.wsListen(conn)
 }
 
 // receive messages for one websocket connection

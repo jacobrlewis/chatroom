@@ -2,18 +2,20 @@
 
 This is a simple chatroom server and cli client. I am using this project to practice Go!
 
+Chats are sent between client and server using the Gorilla Websocket package.
+
 # Getting Started
 
-## Building
+## Running
 
 Use something along the lines of
 ```
-cd server
+cd cmd/server
 go run .
 ```
 and
 ```
-cd cli
+cd cmd/cli
 go run .
 ```
 
