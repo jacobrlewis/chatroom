@@ -12,4 +12,6 @@ type ServerHello struct {
 type Msg struct {
 	Username string `json:"username"`
 	Msg      string `json:"msg"`
+	Join     bool   `json:"join"`
+	Leave    bool   `json:"leave"`
 }

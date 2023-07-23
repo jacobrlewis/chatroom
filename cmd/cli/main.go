@@ -122,14 +122,18 @@ func (client Client) receiveMessages() {
 			return
 		}
 
-		fmt.Printf("Got message %v", msg)
-
 		// TODO read current input buffer (if user has anything typed not yet sent)
 
 		// clear current line and print new message
 		clearCurrentLine := "\033[2K"
 		fmt.Print(clearCurrentLine + "\r")
-		fmt.Println(msg.Username + ": " + msg.Msg)
+		if msg.Join {
+			fmt.Println("**** " + msg.Username + " joined the room! ***")
+		} else if msg.Leave {
+			fmt.Println("**** " + msg.Username + " left the room! ***")
+		} else {
+			fmt.Println(msg.Username + ": " + msg.Msg)
+		}
 
 		// re-print prompt
 		fmt.Print("You: ")

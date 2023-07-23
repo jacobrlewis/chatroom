@@ -81,16 +81,22 @@ func (room ServerRoom) startWs(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Room %s started web socket connection with %s", room.Id, hello.Username)
 
 	room.Conns[hello.Username] = conn
-	room.wsListen(conn)
+	room.sendJoinAlert(hello.Username)
+	room.wsListen(conn, hello.Username)
 }
 
 // receive messages for one websocket connection
-func (room ServerRoom) wsListen(conn *websocket.Conn) {
+func (room ServerRoom) wsListen(conn *websocket.Conn, username string) {
 	defer conn.Close()
 	for {
 		_, msgBytes, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Error reading message from client:", err)
+			log.Printf("Closing connection with %s", username)
+
+			// remove conn from known connections
+			delete(room.Conns, username)
+			room.sendleaveAlert(username)
 
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 				log.Println("Client closed unexpectedly.")
@@ -108,11 +114,40 @@ func (room ServerRoom) wsListen(conn *websocket.Conn) {
 		}
 		log.Println(fmt.Sprintf("Room %s received message: %+v", room.Id, msg))
 
-		// send messages to other users
-		for username, out := range room.Conns {
-			if username != msg.Username {
-				out.WriteMessage(websocket.TextMessage, msgBytes)
-			}
+		// validate values before sending to other clients
+		msg.Join = false
+		msg.Join = false
+		room.sendMsg(username, msgBytes)
+	}
+}
+
+// send message to all clients that a user joined
+func (room ServerRoom) sendJoinAlert(username string) {
+
+	msg := shared.Msg{
+		Username: username,
+		Join: true,
+	}
+	msgBytes, _ := json.Marshal(msg)
+	room.sendMsg(username, msgBytes)
+}
+
+// send message to all clients that a user joined
+func (room ServerRoom) sendleaveAlert(username string) {
+
+	msg := shared.Msg{
+		Username: username,
+		Leave: true,
+	}
+	msgBytes, _ := json.Marshal(msg)
+	room.sendMsg(username, msgBytes)
+}
+
+// send msg to all clients except sender
+func (room ServerRoom) sendMsg(sender string, msg []byte) {
+	for u, out := range room.Conns {
+		if u != sender {
+			go out.WriteMessage(websocket.TextMessage, msg)
 		}
 	}
 }
