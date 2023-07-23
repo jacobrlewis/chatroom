@@ -47,10 +47,10 @@ func main() {
 	http.HandleFunc(shared.GetInitEndpoint(), welcomeHandler)
 
 	for i := 1; i <= NUM_ROOMS; i++ {
-		str_id := fmt.Sprint(i)
+		id := fmt.Sprint(i)
 		room := ServerRoom{
-			Id:             str_id,
-			RoomWelcomeMsg: fmt.Sprintf("Welcome to room %s!", str_id),
+			Id:             id,
+			RoomWelcomeMsg: fmt.Sprintf("Welcome to room %s!", id),
 			Password:       "",
 			Conns:          make(map[string]*websocket.Conn),
 		}

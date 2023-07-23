@@ -5,12 +5,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"io/ioutil"
 	"jacobrlewis/chatroom/pkg/shared"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gorilla/websocket"
 )
 
 type Client struct {
@@ -56,14 +57,14 @@ func (client Client) initConnection() int {
 func (client Client) joinRoom() {
 
 	// hellos
-	welcome_url := shared.GetRoomWelcomeUrl(client.Host, client.Room)
+	welcomeUrl := shared.GetRoomWelcomeUrl(client.Host, client.Room)
 
 	clientHello := shared.ClientHello{
 		Username: client.Username,
 	}
 	helloBytes, _ := json.Marshal(clientHello)
 
-	resp, err := http.Post(welcome_url, "json", bytes.NewReader(helloBytes))
+	resp, err := http.Post(welcomeUrl, "json", bytes.NewReader(helloBytes))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,10 +83,10 @@ func (client Client) joinRoom() {
 	fmt.Println(serverHello.WelcomeMsg)
 
 	// open websocket
-	ws_url := shared.GetRoomWsUrl(client.Host, client.Room)
+	wsUrl := shared.GetRoomWsUrl(client.Host, client.Room)
 	headers := http.Header{}
 	headers.Set("X-Client-Info", string(helloBytes))
-	conn, _, err := websocket.DefaultDialer.Dial(ws_url.String(), headers)
+	conn, _, err := websocket.DefaultDialer.Dial(wsUrl.String(), headers)
 	if err != nil {
 		log.Fatal("Failed to connect to WebSocket server: ", err)
 	}
@@ -170,8 +171,8 @@ func main() {
 
 	client := Client{Username: username, Host: host, Room: "", Reader: bufio.NewReader(os.Stdin)}
 
-	num_rooms := client.initConnection()
-	fmt.Printf("There are %d rooms on this server.\n", num_rooms)
+	numRooms := client.initConnection()
+	fmt.Printf("There are %d rooms on this server.\n", numRooms)
 
 	client.Room = GetRoomId()
 

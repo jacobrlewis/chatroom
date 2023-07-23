@@ -7,6 +7,7 @@ import (
 	"jacobrlewis/chatroom/pkg/shared"
 	"log"
 	"net/http"
+
 	"github.com/gorilla/websocket"
 )
 
