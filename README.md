@@ -20,3 +20,15 @@ go run .
 ```
 
 to run.
+
+## Client configuration
+
+The environment variables 
+
+* `GO_CHAT_HOST`
+* `GO_CHAT_USERNAME`
+* `GO_CHAT_ROOM` 
+
+can be used to skip prompts when starting a client connection.
+
+Use `source util/profile1.sh` to load an example profile.

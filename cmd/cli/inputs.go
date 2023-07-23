@@ -8,7 +8,17 @@ import (
 	"strings"
 )
 
+var HOST_ENV = "GO_CHAT_HOST"
+var USERNAME_ENV = "GO_CHAT_USERNAME"
+var ROOM_ENV = "GO_CHAT_ROOM"
+
 func GetServerUrl() string {
+
+	if os.Getenv(HOST_ENV) != "" {
+		fmt.Printf("Using %s : %s as host\n", HOST_ENV, os.Getenv(HOST_ENV))
+		return os.Getenv(HOST_ENV)
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Host (localhost): ")
 	host, err := reader.ReadString('\n')
@@ -28,6 +38,12 @@ func GetServerUrl() string {
 }
 
 func GetUsername() string {
+
+	if os.Getenv(USERNAME_ENV) != "" {
+		fmt.Printf("Using %s : %s as username\n", USERNAME_ENV, os.Getenv(USERNAME_ENV))
+		return os.Getenv(USERNAME_ENV)
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter username: ")
 	username, err := reader.ReadString('\n')
@@ -40,6 +56,12 @@ func GetUsername() string {
 }
 
 func GetRoomId() string {
+
+	if os.Getenv(ROOM_ENV) != "" {
+		fmt.Printf("Using %s : %s as room\n", ROOM_ENV, os.Getenv(ROOM_ENV))
+		return os.Getenv(ROOM_ENV)
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter room id: ")
 	id, err := reader.ReadString('\n')
